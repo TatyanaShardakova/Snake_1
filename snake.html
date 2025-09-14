@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Змейка</title>
+        <link rel="stylesheet" href="styles/styles.css">
+        <style>
+            html,
+            body {
+                height: 100%;
+                margin: 0;
+            }
+            /* задаём главные параметры */
+            body{
+                background: black;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            /* делаем границу вокруг игрового поля */
+            canvas {
+                border: 1px solid white;
+            }
+            
+        </style>
+    </head>
+    <body>
+        <!-- рисуем игровое поле -->
+        <canvas width="1040" height="800" id="game"></canvas>
+        <!-- сам скрипт игры -->
+        <script>
+            // поле, на котором всё будет происходить - тоже переменная
+            var canvas = document.getElementById('game');
+            // классическая змейка - двумерная = сделаем такую же
+            var context = canvas.getContext('2d');
+            // размер одной клеточки на поле - 16 пикселей
+            var grid = 16;
+            // служебная переиенная, отвечающая за скорость змейки
+            var count = 0;
+            // сама змейка
+            var snake ={
+                // начальные координаты
+                x: 160,
+                y: 160,
+                // скорость змейки: в каждом новом кадре змейка смещается по оси Х и У. На старте будет двигаться горизонтально, поэтому скорость по "у" = 0
+                dx: grid,
+                dy: 0,
+                // тащим за собой хвост, который пока пустой
+                cells: [],
+                // стартовая длина змейки - 4 клеточки
+                maxCells: 4
+            };
+            // ЕДА. Представим, что это красные яблоки
+            var apple = {
+            // начальные координаты яблока
+                x: 320,
+                y: 320
+            };
+            // и бананы
+            var banana = {
+                x: 320,
+                y: 320
+            };
+            // генератор случайных чисел в заданном диапазоне
+            function getRandomInt(min, max) {
+                return Math.floor(Math.random() * (max - min)) + min;
+            }
+            // игровой цикл
+            function loop() {
+                // хитрая функция, замедляющая скорость игры с 60 кадров/сек до 15: 60/15=4 (до 10: 60/10=6)
+                requestAnimationFrame(loop);
+                // игровой код выполнится только один раз из четырех(в этом и суть замедления) - а пока переменная count<4 код выполняться не будет
+                if (++count <6) {
+                    return;
+                }
+                //  обнуляем переменную скорости
+                count = 0;
+                // очищаем игровое поле
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                // двигаем змейку с нужной скоростью
+                snake.x += snake.dx;
+                snake.y += snake.dy;
+                // если змейка достигла края поля, продолжаем её движение с противоположной стороны поля (по горизонтали)
+                if (snake.x < 0) {
+                    snake.x = canvas.width - grid;
+                }
+                else if (snake.x >= canvas.width) {
+                    snake.x = 0;
+                }
+                // то же самое для движения по вертикали
+                if (snake.y < 0) {
+                    snake.y = canvas.height - grid;
+                }
+                else if (snake.y >= canvas.height) {
+                    snake.y = 0;
+                }
+                // продолжаем двигаться в выбранном направлении. Голова всегда впереди, так что добавляем ее координаты в начало массива, отвечающего за всю змейку
+                snake.cells.unshift( { x: snake.x, y: snake.y } );
+                // сразу после этого удаляем последний элемент массива, т.к. во время движения она постоянно освобождает клетки позади себя
+                if (snake.cells.length > snake.maxCells) {
+                    snake.cells.pop();
+                }
+                // яблоко
+                context.strokeStyle = '#8B0000'; // более тёмные границы яблока
+                context.lineWidth = 2;
+                context.strokeRect (apple.x+3, apple.y+3, grid-8, grid-8);
+                context.fillStyle = '#8B0000'; // нижняя часть яблока (закругление)
+                context.fillRect (apple.x+4, apple.y+11, grid-11, grid-14);
+                context.fillStyle = 'red'; // само яблоко
+                context.fillRect (apple.x+4, apple.y+4, grid-10, grid-10);
+                context.fillStyle = 'red'; // нижняя часть яблока (закругление)
+                context.fillRect (apple.x+5, apple.y+9, grid-13, grid-14);
+                context.fillStyle = 'white'; // блик на яблоке
+                context.fillRect (apple.x+8, apple.y+4, grid-14, grid-14);
+                context.fillStyle = '#3c1900'; // веточка яблока
+                context.fillRect (apple.x+5, apple.y-3, grid-13, grid-7);
+                context.fillStyle = 'green'; // листик яблока(1)
+                context.fillRect (apple.x+7, apple.y+2, grid-14, grid-14);
+                context.fillStyle = 'green'; // листик яблока(2)
+                context.fillRect (apple.x+8, apple.y+1, grid-13, grid-14);
+                context.fillStyle = 'green'; // листик яблока(3)
+                context.fillRect (apple.x+9, apple.y, grid-14, grid-14);
+                // банан
+                //context.fillStyle = 'yellow';
+                //context.fillRect (banana.x, banana.y+3, grid-1, grid-4);
+                context.fillStyle = '#fbc02d';// 1
+                context.fillRect (banana.x+4, banana.y+15, grid-13, grid-15);
+                context.fillStyle = '#fbc02d';// 2.1
+                context.fillRect (banana.x, banana.y+14, grid-6, grid-15);
+                context.fillStyle = '#ffeb3b';// 2.2
+                context.fillRect (banana.x+2, banana.y+14, grid-11, grid-15);
+                context.fillStyle = '#fbc02d';// 3.1
+                context.fillRect (banana.x+9, banana.y+13, grid-13, grid-15);
+                context.fillStyle = '#ffeb3b';// 3.2
+                context.fillRect (banana.x, banana.y+13, grid-7, grid-15);
+                context.fillStyle = '#fbc02d';// 4.1
+                context.fillRect (banana.x+11, banana.y+12, grid-14, grid-15);
+                context.fillStyle = '#ffeb3b';// 4.2
+                context.fillRect (banana.x+4, banana.y+12, grid-9, grid-15);
+                context.fillStyle = '#fff176';// 4.3
+                context.fillRect (banana.x+2, banana.y+12, grid-14, grid-15);
+                context.fillStyle = '#fbc02d';// 5.1
+                context.fillRect (banana.x+12, banana.y+11, grid-14, grid-15);
+                context.fillStyle = '#ffeb3b';// 5.2
+                context.fillRect (banana.x+7, banana.y+11, grid-11, grid-15);
+                context.fillStyle = '#fff176';// 5.3
+                context.fillRect (banana.x+5, banana.y+11, grid-14, grid-15);
+                context.fillStyle = '#fbc02d';// 6.1
+                context.fillRect (banana.x+13, banana.y+10, grid-15, grid-15);
+                context.fillStyle = '#ffeb3b';// 6.2
+                context.fillRect (banana.x+8, banana.y+10, grid-11, grid-15);
+                context.fillStyle = '#fff176';// 6.3
+                context.fillRect (banana.x+7, banana.y+10, grid-15, grid-15);
+                context.fillStyle = '#fbc02d';// 7.1
+                context.fillRect (banana.x+13, banana.y+9, grid-14, grid-15);
+                context.fillStyle = '#ffeb3b';// 7.2
+                context.fillRect (banana.x+9, banana.y+9, grid-12, grid-15);
+                context.fillStyle = '#fff176';// 7.3
+                context.fillRect (banana.x+8, banana.y+9, grid-15, grid-15);
+                context.fillStyle = '#fbc02d';// 8.1
+                context.fillRect (banana.x+14, banana.y+8, grid-15, grid-15);
+                context.fillStyle = '#ffeb3b';// 8.2
+                context.fillRect (banana.x+10, banana.y+8, grid-12, grid-15);
+                context.fillStyle = '#fff176';// 8.3
+                context.fillRect (banana.x+9, banana.y+8, grid-15, grid-15);
+                context.fillStyle = '#fbc02d';// 9.1
+                context.fillRect (banana.x+14, banana.y+7, grid-14, grid-15);
+                context.fillStyle = '#ffeb3b';// 9.2
+                context.fillRect (banana.x+11, banana.y+7, grid-13, grid-15);
+                context.fillStyle = '#fff176';// 9.3
+                context.fillRect (banana.x+10, banana.y+7, grid-15, grid-15);
+                context.fillStyle = '#fbc02d';// 10.1
+                context.fillRect (banana.x+15, banana.y+6, grid-15, grid-15);
+                context.fillStyle = '#ffeb3b';// 10.2
+                context.fillRect (banana.x+12, banana.y+6, grid-13, grid-15);
+                context.fillStyle = '#fff176';// 10.3
+                context.fillRect (banana.x+11, banana.y+6, grid-15, grid-15);
+                context.fillStyle = '#fbc02d';// 11.1
+                context.fillRect (banana.x+15, banana.y+5, grid-15, grid-15);
+                context.fillStyle = '#ffeb3b';// 11.2
+                context.fillRect (banana.x+12, banana.y+5, grid-13, grid-15);
+                context.fillStyle = '#fff176';// 11.3
+                context.fillRect (banana.x+11, banana.y+5, grid-14, grid-15);
+                context.fillStyle = '#fbc02d';// 12.1
+                context.fillRect (banana.x+15, banana.y+4, grid-15, grid-15);
+                context.fillStyle = '#ffeb3b';// 12.2
+                context.fillRect (banana.x+13, banana.y+4, grid-14, grid-15);
+                context.fillStyle = '#fff176';// 12.3
+                context.fillRect (banana.x+12, banana.y+4, grid-15, grid-15);
+                context.fillStyle = '#fbc02d';// 13.1
+                context.fillRect (banana.x+14, banana.y+3, grid-15, grid-15);
+                context.fillStyle = '#ffeb3b';// 13.2
+                context.fillRect (banana.x+13, banana.y+3, grid-15, grid-15);
+                context.fillStyle = '#515203';// ветка светлая
+                context.fillRect (banana.x+12, banana.y-1, grid-14, grid-12);
+                context.fillStyle = '#515203';// ветка тёмная
+                context.fillRect (banana.x+14, banana.y-1, grid-15, grid-12);
+                context.fillStyle = '#515203';// кончик банана
+                context.fillRect (banana.x+1, banana.y+13, grid-15, grid-12);
+                
+                //  одно новое движение змейки - один новый нарисованный квадратик
+                context.fillStyle = 'green';
+                // обрабатываем каждый элемент змейки
+                snake.cells.forEach(function (cell, index) {
+                    //чтобы создать эффект клеточек, делаем зелёные квадратики меньше на 1 пиксель, чтобы вокруг них образовалась чёрная граница
+                    //голова змеи
+                    context.fillStyle = 'green';
+                    context.fillRect(cell.x, cell.y, grid-1, grid-1);
+                    // если змейка добралась до яблочка
+                    if (cell.x === apple.x && cell.y === apple.y) {
+                        // увеличиваем змейку
+                        snake.maxCells++;
+                        // рисуем новое яблочко: размер холста 400*400, при этом он разбит на ячейки - 25 в каждую сторону
+                        apple.x = getRandomInt(0, 65) * grid;
+                        apple.y = getRandomInt(0, 50) * grid;
+                    }
+                    if (cell.x === banana.x && cell.y === banana.y) {
+                        // увеличиваем змейку
+                        snake.maxCells++;
+                        // рисуем новое яблочко: размер холста 400*400, при этом он разбит на ячейки - 25 в каждую сторону
+                        banana.x = getRandomInt(0, 65) * grid;
+                        banana.y = getRandomInt(0, 50) * grid;
+                    }
+                        // проверяем, не столкнулась ли змея с самой собой: перебираем массив на наличие двух клеток в змейке с одинаковыми координатами
+                    for (var i=index+1; i < snake.cells.length; i++) {
+                            // если такие клетки есть, начинаем игру заново
+                            if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
+                                // задаем стартовые параметры основным переменным
+                                snake.x = 320;
+                                snake.y = 320;
+                                snake.cells = [];
+                                snake.maxCells = 4;
+                                snake.dx = grid;
+                                snake.dy = 0;
+                                // ставим яблочко в случайное место
+                                apple.x = 320;
+                                apple.y = 320;
+                                banana.x = 320;
+                                banana.y = 320;
+                            }
+                    }
+                });
+            }
+            // смотрим, какие нажимаются клавиши и реагируем на них нужным образом
+            document.addEventListener('keydown', function(e) {
+                // проверяем: если змейка движется влево (вправо), то при нажатии "влево" (вправо) ничего не поменяется
+                //стрелка влево
+                //если нажата влево и при этом движется не по горизонтали
+                if (e.which === 37 && snake.dx === 0) {
+                    // то даем ей движение по горизонтали - влево, а по вертикали - останавливаем
+                    // та же логика и в остальных кнопках
+                    snake.dx = -grid;
+                    snake.dy = 0;
+                }
+                // стрелка вверх
+                else if (e.which === 38 && snake.dy === 0) {
+                    snake.dy = -grid;
+                    snake.dx = 0;
+                }
+                // стрелка вправо
+                else if (e.which === 39 && snake.dx === 0) {
+                    snake.dx = grid;
+                    snake.dy = 0;
+                }
+                // стрелка вниз
+                else if (e.which === 40 && snake.dy === 0) {
+                    snake.dy = grid;
+                    snake.dx = 0;
+                }
+            });     
+            // запускаем игру
+            requestAnimationFrame(loop);
+        </script>
+    </body>
+</html>
